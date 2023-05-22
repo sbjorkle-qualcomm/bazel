@@ -65,6 +65,7 @@ import com.google.devtools.build.lib.events.ExtendedEventHandler;
 import com.google.devtools.build.lib.events.StoredEventHandler;
 import com.google.devtools.build.lib.packages.Aspect;
 import com.google.devtools.build.lib.packages.BuildType;
+import com.google.devtools.build.lib.packages.NoSuchPackageException;
 import com.google.devtools.build.lib.packages.NoSuchTargetException;
 import com.google.devtools.build.lib.packages.NonconfigurableAttributeMapper;
 import com.google.devtools.build.lib.packages.Package;
@@ -76,6 +77,9 @@ import com.google.devtools.build.lib.packages.Type;
 import com.google.devtools.build.lib.server.FailureDetails.FailureDetail;
 import com.google.devtools.build.lib.skyframe.ConfiguredTargetEvaluationExceptions.ReportedException;
 import com.google.devtools.build.lib.skyframe.ConfiguredTargetEvaluationExceptions.UnreportedException;
+import com.google.devtools.build.lib.skyframe.toolchains.ToolchainContextKey;
+import com.google.devtools.build.lib.skyframe.toolchains.ToolchainException;
+import com.google.devtools.build.lib.skyframe.toolchains.UnloadedToolchainContext;
 import com.google.devtools.build.lib.util.DetailedExitCode;
 import com.google.devtools.build.lib.util.DetailedExitCode.DetailedExitCodeComparator;
 import com.google.devtools.build.lib.util.OrderedSetMultimap;
@@ -553,11 +557,21 @@ public final class PrerequisiteProducer {
     if (env.valuesMissing()) {
       return null;
     }
-    PackageValue packageValue = (PackageValue) packageAndMaybeConfigurationValues.get(packageKey);
-    if (packageValue == null) {
-      return null;
+    Package pkg;
+    try {
+      pkg =
+          ((PackageValue)
+                  packageAndMaybeConfigurationValues.getOrThrow(
+                      packageKey, NoSuchPackageException.class))
+              .getPackage();
+    } catch (NoSuchPackageException e) {
+      if (!e.getMessage().isEmpty()) {
+        env.getListener().handle(Event.error(e.getMessage()));
+      }
+      throw new ReportedException(
+          new ConfiguredValueCreationException(
+              null, e.getMessage(), label, null, null, e.getDetailedExitCode()));
     }
-    Package pkg = packageValue.getPackage();
     if (configurationKeyMaybe != null) {
       configuration =
           (BuildConfigurationValue) packageAndMaybeConfigurationValues.get(configurationKeyMaybe);
