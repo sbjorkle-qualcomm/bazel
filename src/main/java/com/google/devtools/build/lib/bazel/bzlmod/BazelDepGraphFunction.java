@@ -77,8 +77,9 @@ public class BazelDepGraphFunction implements SkyFunction {
 
     // If the module has not changed (has the same contents and flags as the lockfile),
     // read the dependency graph from the lock file, else run resolution and update lockfile
+    BazelLockFileValue lockFile = null;
     if (!lockfileMode.equals(LockfileMode.OFF)) {
-      BazelLockFileValue lockFile = (BazelLockFileValue) env.getValue(BazelLockFileValue.KEY);
+      lockFile = (BazelLockFileValue) env.getValue(BazelLockFileValue.KEY);
       if (lockFile == null) {
         return null;
       }
@@ -87,7 +88,7 @@ public class BazelDepGraphFunction implements SkyFunction {
         return null;
       }
       localOverrideHashes = getLocalOverridesHashes(root.getOverrides(), env);
-      if (localOverrideHashes == null) { // trying to read override module
+      if (localOverrideHashes == null) { // still reading an override "module"
         return null;
       }
 
@@ -97,7 +98,7 @@ public class BazelDepGraphFunction implements SkyFunction {
         depGraph = lockFile.getModuleDepGraph();
       } else if (lockfileMode.equals(LockfileMode.ERROR)) {
         List<String> diffLockfile =
-            lockFile.getDiffLockfile(root.getModuleFileHash(), localOverrideHashes, flags);
+            lockFile.getModuleAndFlagsDiff(root.getModuleFileHash(), localOverrideHashes, flags);
         throw new BazelDepGraphFunctionException(
             ExternalDepsException.withMessage(
                 Code.BAD_MODULE,
@@ -114,9 +115,12 @@ public class BazelDepGraphFunction implements SkyFunction {
         return null;
       }
       depGraph = selectionResult.getResolvedDepGraph();
+
       if (lockfileMode.equals(LockfileMode.UPDATE)) {
-        BazelLockFileFunction.updateLockedModule(
-            rootDirectory, root.getModuleFileHash(), flags, localOverrideHashes, depGraph);
+        BazelLockFileValue updatedLockFile =
+            lockFile.toBuilder().setModuleFileHash(root.getModuleFileHash()).setFlags(flags)
+            .setLocalOverrideHashes(localOverrideHashes).setModuleDepGraph(depGraph).build();
+        BazelLockFileFunction.updateLockfile(rootDirectory, updatedLockFile);
       }
     }
 

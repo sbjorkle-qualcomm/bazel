@@ -22,6 +22,9 @@ import static com.google.devtools.build.lib.bazel.bzlmod.DelegateTypeAdapterFact
 
 import com.google.common.base.Splitter;
 import com.google.devtools.build.lib.bazel.bzlmod.Version.ParseException;
+import com.google.devtools.build.lib.cmdline.Label;
+import com.google.devtools.build.lib.cmdline.LabelSyntaxException;
+import com.google.devtools.build.lib.cmdline.PackageIdentifier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -88,6 +91,28 @@ public final class GsonTypeAdapterUtil {
         }
       };
 
+  public static final TypeAdapter<ModuleExtensionId> MODULE_EXTENSION_ID_TYPE_ADAPTER =
+      new TypeAdapter<>() {
+        @Override
+        public void write(JsonWriter jsonWriter, ModuleExtensionId moduleExtId) throws IOException {
+          jsonWriter.value(moduleExtId.getBzlFileLabel() + "%" + moduleExtId.getExtensionName());
+        }
+        @Override
+        public ModuleExtensionId read(JsonReader jsonReader) throws IOException {
+          String jsonString = jsonReader.nextString();
+          // [0] is labelString, [1] is extName
+          List<String> extIdParts = Splitter.on("%").splitToList(jsonString);
+          try {
+            return ModuleExtensionId.create(
+                Label.parseCanonical(extIdParts.get(0)), extIdParts.get(1));
+          } catch (LabelSyntaxException e) {
+            throw new JsonParseException(
+                String.format("Unable to parse ModuleExtensionID bzl file label:  %s from the lockfile", extIdParts.get(0)),
+                e);
+          }
+        }
+      };
+
   public static final Gson LOCKFILE_GSON =
       new GsonBuilder()
           .setPrettyPrinting()
@@ -100,6 +125,7 @@ public final class GsonTypeAdapterUtil {
           .registerTypeAdapterFactory(IMMUTABLE_SET)
           .registerTypeAdapter(Version.class, VERSION_TYPE_ADAPTER)
           .registerTypeAdapter(ModuleKey.class, MODULE_KEY_TYPE_ADAPTER)
+          .registerTypeAdapter(ModuleExtensionId.class, MODULE_EXTENSION_ID_TYPE_ADAPTER)
           .registerTypeAdapter(AttributeValues.class, new AttributeValuesAdapter())
           .create();
 

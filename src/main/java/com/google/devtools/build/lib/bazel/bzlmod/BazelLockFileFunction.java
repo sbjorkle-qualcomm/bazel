@@ -52,12 +52,14 @@ public class BazelLockFileFunction implements SkyFunction {
           ImmutableList.of(), ImmutableMap.of(), ImmutableList.of(), "", false, "", "");
 
   private static final BazelLockFileValue EMPTY_LOCKFILE =
-      BazelLockFileValue.create(
-          BazelLockFileValue.LOCK_FILE_VERSION,
-          "",
-          EMPTY_FLAGS,
-          ImmutableMap.of(),
-          ImmutableMap.of());
+      BazelLockFileValue.builder()
+          .setLockFileVersion(BazelLockFileValue.LOCK_FILE_VERSION)
+          .setModuleFileHash("")
+          .setFlags(EMPTY_FLAGS)
+          .setLocalOverrideHashes(ImmutableMap.of())
+          .setModuleDepGraph(ImmutableMap.of())
+          .setModuleExtensions(ImmutableMap.of())
+          .build();
 
   public BazelLockFileFunction(Path rootDirectory) {
     this.rootDirectory = rootDirectory;
@@ -88,30 +90,19 @@ public class BazelLockFileFunction implements SkyFunction {
   }
 
   /**
-   * Updates the stored module in the lock file (ModuleHash, Flags & Dependency graph)
+   * Updates the data stored in the lockfile (MODULE.bazel.lock)
    *
-   * @param moduleFileHash The hash of the current module file
-   * @param resolvedDepGraph The resolved dependency graph from the module file
+   * @param rootDirectory Where to update the lockfile
+   * @param updatedLockfile The updated lockfile data to save
    */
-  public static void updateLockedModule(
+  public static void updateLockfile(
       Path rootDirectory,
-      String moduleFileHash,
-      BzlmodFlagsAndEnvVars flags,
-      ImmutableMap<String, String> localOverrideHashes,
-      ImmutableMap<ModuleKey, Module> resolvedDepGraph)
+      BazelLockFileValue updatedLockfile)
       throws BazelDepGraphFunctionException {
     RootedPath lockfilePath =
         RootedPath.toRootedPath(Root.fromPath(rootDirectory), LabelConstants.MODULE_LOCKFILE_NAME);
-
-    BazelLockFileValue value =
-        BazelLockFileValue.create(
-            BazelLockFileValue.LOCK_FILE_VERSION,
-            moduleFileHash,
-            flags,
-            localOverrideHashes,
-            resolvedDepGraph);
     try {
-      FileSystemUtils.writeContent(lockfilePath.asPath(), UTF_8, LOCKFILE_GSON.toJson(value));
+      FileSystemUtils.writeContent(lockfilePath.asPath(), UTF_8, LOCKFILE_GSON.toJson(updatedLockfile));
     } catch (IOException e) {
       throw new BazelDepGraphFunctionException(
           ExternalDepsException.withCauseAndMessage(

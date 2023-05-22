@@ -174,12 +174,14 @@ public class BazelLockFileFunctionTest extends FoundationTestCase {
                         if (localOverrideHashes == null) {
                           return null;
                         }
-                        BazelLockFileFunction.updateLockedModule(
+                        BazelLockFileFunction.updateLockfile(
                             rootDirectory,
-                            key.moduleHash(),
-                            flags,
-                            localOverrideHashes,
-                            key.depGraph());
+                            BazelLockFileValue.builder()
+                                .setModuleFileHash(key.moduleHash())
+                                .setFlags(flags)
+                                .setLocalOverrideHashes(localOverrideHashes)
+                                .setModuleDepGraph(key.depGraph()).build());
+
                         return new SkyValue() {};
                       }
                     })

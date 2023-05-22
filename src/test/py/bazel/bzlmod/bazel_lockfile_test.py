@@ -253,6 +253,26 @@ class BazelLockfileTest(test_base.TestBase):
         stderr,
     )
 
+  def testModuleExtensionWithLockfile(self):
+    self.ScratchFile('MODULE.bazel', [
+      'lockfile_ext = use_extension("//ss:extension.bzl", "lockfile_ext")',
+      'use_repo(lockfile_ext, "hello")',
+    ])
+    self.ScratchFile('ss/BUILD.bazel')
+    self.ScratchFile('ss/extension.bzl', [
+      'def _repo_rule_impl(ctx):',
+      '    ctx.file("WORKSPACE")',
+      '    ctx.file("BUILD", "filegroup(name=\\"lala\\")")',
+      'repo_rule = repository_rule(implementation = _repo_rule_impl)',
+      'def _module_ext_impl(ctx):',
+      '    print("Hello from the other side!")',
+      '    repo_rule(name= "hello")',
+      'lockfile_ext = module_extension(implementation = _module_ext_impl)',
+    ])
+    _, stdout, stderr = self.RunBazel(['build', '@hello//:all'])
+    self.assertIn("Hello from the other side!", ''.join(stderr))
+    _, stdout, stderr = self.RunBazel(['build', '@hello//:all'])
+    self.assertNotIn("Hello from the other side!", ''.join(stderr))
 
 if __name__ == '__main__':
   unittest.main()
