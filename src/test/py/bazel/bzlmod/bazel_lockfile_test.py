@@ -255,11 +255,11 @@ class BazelLockfileTest(test_base.TestBase):
 
   def testModuleExtensionWithLockfile(self):
     self.ScratchFile('MODULE.bazel', [
-      'lockfile_ext = use_extension("//ss:extension.bzl", "lockfile_ext")',
+      'lockfile_ext = use_extension("extension.bzl", "lockfile_ext")',
       'use_repo(lockfile_ext, "hello")',
     ])
-    self.ScratchFile('ss/BUILD.bazel')
-    self.ScratchFile('ss/extension.bzl', [
+    self.ScratchFile('BUILD.bazel')
+    self.ScratchFile('extension.bzl', [
       'def _repo_rule_impl(ctx):',
       '    ctx.file("WORKSPACE")',
       '    ctx.file("BUILD", "filegroup(name=\\"lala\\")")',
@@ -271,6 +271,7 @@ class BazelLockfileTest(test_base.TestBase):
     ])
     _, stdout, stderr = self.RunBazel(['build', '@hello//:all'])
     self.assertIn("Hello from the other side!", ''.join(stderr))
+    self.RunBazel(['shutdown'])
     _, stdout, stderr = self.RunBazel(['build', '@hello//:all'])
     self.assertNotIn("Hello from the other side!", ''.join(stderr))
 

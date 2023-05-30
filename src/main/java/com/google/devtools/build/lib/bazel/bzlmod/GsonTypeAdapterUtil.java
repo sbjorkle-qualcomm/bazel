@@ -117,6 +117,7 @@ public final class GsonTypeAdapterUtil {
       new GsonBuilder()
           .setPrettyPrinting()
           .disableHtmlEscaping()
+          .enableComplexMapKeySerialization()
           .registerTypeAdapterFactory(GenerateTypeAdapter.FACTORY)
           .registerTypeAdapterFactory(DICT)
           .registerTypeAdapterFactory(IMMUTABLE_MAP)

@@ -16,11 +16,13 @@ package com.google.devtools.build.lib.bazel.bzlmod;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
+import com.ryanharter.auto.value.gson.GenerateTypeAdapter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 /** Object to hold all module extensions related data needed in the lockfile*/
 @AutoValue
+@GenerateTypeAdapter
 public abstract class LockfileModuleExtension {
 
   public abstract ImmutableByteArray getTransitiveDigest();

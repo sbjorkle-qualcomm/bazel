@@ -25,7 +25,6 @@ import com.google.devtools.build.skyframe.SkyValue;
 import com.ryanharter.auto.value.gson.GenerateTypeAdapter;
 import java.util.ArrayList;
 import java.util.Map;
-import javafx.util.Builder;
 
 /**
  * The result of reading the lockfile. Contains the lockfile version, module hash, definitions of
@@ -40,8 +39,10 @@ public abstract class BazelLockFileValue implements SkyValue {
 
   @SerializationConstant public static final SkyKey KEY = () -> SkyFunctions.BAZEL_LOCK_FILE;
 
-  static Builder builder() {
-    return new AutoValue_BazelLockFileValue.Builder();
+  public static Builder builder() {
+    return new AutoValue_BazelLockFileValue.Builder()
+        .setLockFileVersion(LOCK_FILE_VERSION)
+        .setModuleExtensions(ImmutableMap.of());
   }
 
   /** Current version of the lock file */

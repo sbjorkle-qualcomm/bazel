@@ -180,7 +180,8 @@ public class BazelLockFileFunctionTest extends FoundationTestCase {
                                 .setModuleFileHash(key.moduleHash())
                                 .setFlags(flags)
                                 .setLocalOverrideHashes(localOverrideHashes)
-                                .setModuleDepGraph(key.depGraph()).build());
+                                .setModuleDepGraph(key.depGraph())
+                                .build());
 
                         return new SkyValue() {};
                       }

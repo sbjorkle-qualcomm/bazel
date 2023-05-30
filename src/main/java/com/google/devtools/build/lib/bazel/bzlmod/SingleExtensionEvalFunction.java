@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import net.starlark.java.eval.EvalException;
 import net.starlark.java.eval.Module;
@@ -191,14 +192,13 @@ public class SingleExtensionEvalFunction implements SkyFunction {
       LockfileModuleExtension updatedExtension =
           LockfileModuleExtension.create(new ImmutableByteArray(bzlTransitiveDigest),
               usagesValue.getExtensionUsages(), threadContext.getGeneratedRepoSpecs());
-      ImmutableMap<ModuleExtensionId, LockfileModuleExtension> updatedExtensionMap =
-          lockfile.getModuleExtensions().entrySet().stream()
-              .map(entry ->
-                  entry.getKey().equals(extensionId)? Map.entry(entry.getKey(), updatedExtension) : entry)
-              .collect(ImmutableMap.toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
+      ImmutableMap.Builder<ModuleExtensionId, LockfileModuleExtension> updatedExtensionMap =
+          ImmutableMap.builder();
+      updatedExtensionMap.putAll(lockfile.getModuleExtensions());
+      updatedExtensionMap.put(extensionId, updatedExtension);
 
       BazelLockFileValue updatedLockfile =
-          lockfile.toBuilder().setModuleExtensions(updatedExtensionMap).build();
+          lockfile.toBuilder().setModuleExtensions(updatedExtensionMap.buildOrThrow()).build();
       BazelLockFileFunction.updateLockfile(directories.getWorkingDirectory(), updatedLockfile);
     }
 
