@@ -85,6 +85,37 @@ java_library(
 )
 
 java_library(
+    name = "bazel_module_event",
+    srcs = ["BazelModuleEvent.java"],
+    deps = [
+        ":common",
+        ":resolution",
+        "//src/main/java/com/google/devtools/build/lib/events",
+        "//src/main/java/com/google/devtools/build/lib/vfs",
+        "//third_party:guava",
+        "//third_party:jsr305",
+    ],
+)
+
+java_library(
+    name = "bazel_resolved_module",
+    srcs = ["BazelResolvedModule.java"],
+    deps = [
+        ":bazel_module_event",
+        ":common",
+        ":resolution",
+        ":resolution_impl",
+        "//src/main/java/com/google/devtools/build/lib:runtime",
+        "//src/main/java/com/google/devtools/build/lib/bazel/repository",
+        "//src/main/java/com/google/devtools/build/lib/bazel/repository:repository_options",
+        "//src/main/java/com/google/devtools/common/options:options_internal",
+        "//third_party:flogger",
+        "//third_party:guava",
+        "//third_party:jsr305",
+    ],
+)
+
+java_library(
     name = "resolution",
     srcs = [
         "AbridgedModule.java",
@@ -153,6 +184,7 @@ java_library(
         "TypeCheckedTag.java",
     ],
     deps = [
+        ":bazel_module_event",
         ":common",
         ":exception",
         ":module_extension",

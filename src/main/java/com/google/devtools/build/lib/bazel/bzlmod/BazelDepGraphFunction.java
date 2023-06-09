@@ -31,6 +31,7 @@ import com.google.devtools.build.lib.bazel.repository.RepositoryOptions.Lockfile
 import com.google.devtools.build.lib.cmdline.LabelSyntaxException;
 import com.google.devtools.build.lib.cmdline.PackageIdentifier;
 import com.google.devtools.build.lib.cmdline.RepositoryName;
+import com.google.devtools.build.lib.events.ExtendedEventHandler;
 import com.google.devtools.build.lib.packages.LabelConverter;
 import com.google.devtools.build.lib.server.FailureDetails.ExternalDeps.Code;
 import com.google.devtools.build.lib.skyframe.ClientEnvironmentFunction;
@@ -115,8 +116,7 @@ public class BazelDepGraphFunction implements SkyFunction {
       }
       depGraph = selectionResult.getResolvedDepGraph();
       if (lockfileMode.equals(LockfileMode.UPDATE)) {
-        BazelLockFileFunction.updateLockedModule(
-            rootDirectory, root.getModuleFileHash(), flags, localOverrideHashes, depGraph);
+        sendUpdateModuleEvent(env.getListener(), root.getModuleFileHash(), flags, localOverrideHashes, depGraph);
       }
     }
 
@@ -136,6 +136,27 @@ public class BazelDepGraphFunction implements SkyFunction {
         depGraph.values().stream().map(AbridgedModule::from).collect(toImmutableList()),
         extensionUsagesById,
         extensionUniqueNames.inverse());
+  }
+
+  private void sendUpdateModuleEvent(
+      ExtendedEventHandler handler, String moduleFileHash, BzlmodFlagsAndEnvVars flags, ImmutableMap<String, String> localOverrideHashes, ImmutableMap<ModuleKey, Module> depGraph) {
+    handler.post(
+            new BazelModuleEvent() {
+              @Override
+              public Path getRootDirectory() { return rootDirectory; }
+              @Override
+              public String getModuleFileHash() { return moduleFileHash; }
+              @Override
+              public BzlmodFlagsAndEnvVars getFlags() { return flags; }
+              @Override
+              public ImmutableMap<String, String> getLocalOverrideHashes() {
+                return localOverrideHashes;
+              }
+              @Override
+              public ImmutableMap<ModuleKey, Module> getModuleDepGraph() {
+                return depGraph;
+              }
+            });
   }
 
   @Nullable

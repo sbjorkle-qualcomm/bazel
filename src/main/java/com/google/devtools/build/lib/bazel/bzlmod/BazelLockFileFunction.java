@@ -92,31 +92,18 @@ public class BazelLockFileFunction implements SkyFunction {
     return bazelLockFileValue;
   }
 
-  /**
-   * Updates the stored module in the lock file (ModuleHash, Flags & Dependency graph)
+   /* Updates the data stored in the lockfile (MODULE.bazel.lock)
    *
-   * @param moduleFileHash The hash of the current module file
-   * @param resolvedDepGraph The resolved dependency graph from the module file
+       * @param rootDirectory Where to update the lockfile
+   * @param updatedLockfile The updated lockfile data to save
    */
-  public static void updateLockedModule(
-      Path rootDirectory,
-      String moduleFileHash,
-      BzlmodFlagsAndEnvVars flags,
-      ImmutableMap<String, String> localOverrideHashes,
-      ImmutableMap<ModuleKey, Module> resolvedDepGraph)
+  public static void updateLockfile(Path rootDirectory, BazelLockFileValue updatedLockfile)
       throws BazelLockfileFunctionException {
     RootedPath lockfilePath =
         RootedPath.toRootedPath(Root.fromPath(rootDirectory), LabelConstants.MODULE_LOCKFILE_NAME);
-
-    BazelLockFileValue value =
-        BazelLockFileValue.create(
-            BazelLockFileValue.LOCK_FILE_VERSION,
-            moduleFileHash,
-            flags,
-            localOverrideHashes,
-            resolvedDepGraph);
     try {
-      FileSystemUtils.writeContent(lockfilePath.asPath(), UTF_8, LOCKFILE_GSON.toJson(value));
+      FileSystemUtils.writeContent(
+          lockfilePath.asPath(), UTF_8, LOCKFILE_GSON.toJson(updatedLockfile));
     } catch (IOException e) {
       throw new BazelLockfileFunctionException(
           ExternalDepsException.withCauseAndMessage(
