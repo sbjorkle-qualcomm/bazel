@@ -24,16 +24,24 @@ import com.google.common.base.Splitter;
 import com.google.devtools.build.lib.bazel.bzlmod.Version.ParseException;
 import com.google.devtools.build.lib.cmdline.Label;
 import com.google.devtools.build.lib.cmdline.LabelSyntaxException;
-import com.google.devtools.build.lib.cmdline.PackageIdentifier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.ryanharter.auto.value.gson.GenerateTypeAdapter;
 import java.io.IOException;
 import java.util.List;
+import java.lang.reflect.Type;
+import java.util.Base64;
+import javax.print.DocFlavor.BYTE_ARRAY;
 
 /**
  * Utility class to hold type adapters and helper methods to get gson registered with type adapters
@@ -113,6 +121,19 @@ public final class GsonTypeAdapterUtil {
         }
       };
 
+  public static final TypeAdapter<byte[]> BYTE_ARRAY_TYPE_ADAPTER =
+      new TypeAdapter<>() {
+        @Override
+        public void write(JsonWriter jsonWriter, byte[] value) throws IOException {
+          jsonWriter.value(Base64.getEncoder().encodeToString(value));
+        }
+
+        @Override
+        public byte[] read(JsonReader jsonReader) throws IOException {
+          return Base64.getDecoder().decode(jsonReader.nextString());
+        }
+      };
+
   public static final Gson LOCKFILE_GSON =
       new GsonBuilder()
           .setPrettyPrinting()
@@ -128,6 +149,7 @@ public final class GsonTypeAdapterUtil {
           .registerTypeAdapter(ModuleKey.class, MODULE_KEY_TYPE_ADAPTER)
           .registerTypeAdapter(ModuleExtensionId.class, MODULE_EXTENSION_ID_TYPE_ADAPTER)
           .registerTypeAdapter(AttributeValues.class, new AttributeValuesAdapter())
+          .registerTypeAdapter(byte[].class, BYTE_ARRAY_TYPE_ADAPTER)
           .create();
 
   private GsonTypeAdapterUtil() {}

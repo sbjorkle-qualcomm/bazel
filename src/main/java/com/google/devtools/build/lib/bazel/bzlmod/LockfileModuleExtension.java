@@ -25,14 +25,14 @@ import java.util.Arrays;
 @GenerateTypeAdapter
 public abstract class LockfileModuleExtension {
 
-  public abstract ImmutableByteArray getTransitiveDigest();
+  public abstract byte[] getTransitiveDigest();
 
   /** All usages of this extension, by the key of the module where the usage occurs. */
   public abstract ImmutableMap<ModuleKey, ModuleExtensionUsage> getExtensionUsages();
 
   public abstract ImmutableMap<String, RepoSpec> getGeneratedRepoSpecs();
 
-  public static LockfileModuleExtension create(ImmutableByteArray transitiveDigest,
+  public static LockfileModuleExtension create(byte[] transitiveDigest,
       ImmutableMap<ModuleKey, ModuleExtensionUsage> extensionUsages,
       ImmutableMap<String, RepoSpec> generatedRepoSpecs){
     return new AutoValue_LockfileModuleExtension(
@@ -42,7 +42,7 @@ public abstract class LockfileModuleExtension {
   public ArrayList<String> getExtensionDiff(String extensionName, byte[] transitiveDigest,
       ImmutableMap<ModuleKey, ModuleExtensionUsage> extensionUsages) {
     ArrayList<String> extDiff = new ArrayList<>();
-    if (!Arrays.equals(transitiveDigest, getTransitiveDigest().getData())) {
+    if (!Arrays.equals(transitiveDigest, getTransitiveDigest())) {
       extDiff.add("The implementation of the extension named '" + extensionName + "' or one of its transitive modules have changed");
     }
     if (!extensionUsages.equals(getExtensionUsages())) {

@@ -160,7 +160,7 @@ public class SingleExtensionEvalFunction implements SkyFunction {
           lockfile.getModuleExtensions().get(extensionId);
       //If we have the extension, check if the implementation and usage haven't changed
       if(lockedExtension != null
-          && Arrays.equals(bzlTransitiveDigest, lockedExtension.getTransitiveDigest().getData())
+          && Arrays.equals(bzlTransitiveDigest, lockedExtension.getTransitiveDigest())
           && usagesValue.getExtensionUsages().equals(lockedExtension.getExtensionUsages())
       ) {
         return createSingleExtentionValue(lockedExtension.getGeneratedRepoSpecs(), usagesValue);
@@ -190,7 +190,7 @@ public class SingleExtensionEvalFunction implements SkyFunction {
 
     if (lockfileMode.equals(LockfileMode.UPDATE)){
       LockfileModuleExtension updatedExtension =
-          LockfileModuleExtension.create(new ImmutableByteArray(bzlTransitiveDigest),
+          LockfileModuleExtension.create(bzlTransitiveDigest,
               usagesValue.getExtensionUsages(), threadContext.getGeneratedRepoSpecs());
       ImmutableMap.Builder<ModuleExtensionId, LockfileModuleExtension> updatedExtensionMap =
           ImmutableMap.builder();
@@ -198,7 +198,7 @@ public class SingleExtensionEvalFunction implements SkyFunction {
       updatedExtensionMap.put(extensionId, updatedExtension);
 
       BazelLockFileValue updatedLockfile =
-          lockfile.toBuilder().setModuleExtensions(updatedExtensionMap.buildOrThrow()).build();
+          lockfile.toBuilder().setModuleExtensions(updatedExtensionMap.buildKeepingLast()).build();
       BazelLockFileFunction.updateLockfile(directories.getWorkingDirectory(), updatedLockfile);
     }
 

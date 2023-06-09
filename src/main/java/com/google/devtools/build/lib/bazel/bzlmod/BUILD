@@ -94,7 +94,6 @@ java_library(
         "BazelModuleResolutionValue.java",
         "BzlmodFlagsAndEnvVars.java",
         "GitOverride.java",
-        "ImmutableByteArray.java",
         "InterimModule.java",
         "LocalPathOverride.java",
         "LockfileModuleExtension.java",
